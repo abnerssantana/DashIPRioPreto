@@ -124,6 +124,18 @@ centro_excluido = st.sidebar.multiselect(
     default=[]
 )
 
+st.sidebar.markdown("---")
+
+# Filtro de Categoria de Receitas
+categorias_receitas_global = ['Todas'] + sorted(df_receitas['Categoria'].dropna().unique().tolist())
+categoria_receita_selecionada = st.sidebar.multiselect(
+    "Categoria Receitas",
+    options=categorias_receitas_global[1:],
+    default=[]
+)
+
+st.sidebar.markdown("---")
+
 # Filtro de Mês
 meses_disponiveis = sorted(df['Mês Ano Ref.'].unique().tolist(),
                            key=lambda x: (int(x.split('/')[1]), int(x.split('/')[0])))
@@ -171,6 +183,8 @@ elif centro_excluido:
     if meses_selecionados:
         meses_num_selecionados = [int(m.split('/')[0]) for m in meses_selecionados]
         df_receitas_filtrado = df_receitas_filtrado[df_receitas_filtrado['Mes_Num'].isin(meses_num_selecionados)]
+    if categoria_receita_selecionada:
+        df_receitas_filtrado = df_receitas_filtrado[df_receitas_filtrado['Categoria'].isin(categoria_receita_selecionada)]
 else:
     df_receitas_filtrado = df_receitas.copy()
     mostrar_receitas = True
@@ -178,6 +192,8 @@ else:
     if meses_selecionados:
         meses_num_selecionados = [int(m.split('/')[0]) for m in meses_selecionados]
         df_receitas_filtrado = df_receitas_filtrado[df_receitas_filtrado['Mes_Num'].isin(meses_num_selecionados)]
+    if categoria_receita_selecionada:
+        df_receitas_filtrado = df_receitas_filtrado[df_receitas_filtrado['Categoria'].isin(categoria_receita_selecionada)]
 
 # KPIs principais - Despesas
 st.subheader("📊 Indicadores de Despesas")
