@@ -157,12 +157,20 @@ if meses_selecionados:
 df_filtrado = df_filtrado[(df_filtrado['Valor'] >= valor_min) & (df_filtrado['Valor'] <= valor_max)]
 
 # Filtrar receitas pelos meses selecionados (se houver)
-# Se centro de custo estiver selecionado para inclusão, não mostrar receitas (receitas não têm centro de custo)
-# Se apenas exclusão estiver ativa, manter comparativo (receitas completas vs despesas filtradas)
+# Se centro de custo estiver selecionado para inclusão, não mostrar receitas nem comparativo
+# Se apenas exclusão estiver ativa, ocultar KPIs de receitas mas manter comparativo (receitas completas vs despesas filtradas)
 if centro_selecionado:
     df_receitas_filtrado = pd.DataFrame(columns=df_receitas.columns)
     mostrar_receitas = False
     mostrar_comparativo = False
+elif centro_excluido:
+    # Exclusão ativa: ocultar KPIs de receitas, mas manter comparativo
+    df_receitas_filtrado = df_receitas.copy()
+    mostrar_receitas = False
+    mostrar_comparativo = True
+    if meses_selecionados:
+        meses_num_selecionados = [int(m.split('/')[0]) for m in meses_selecionados]
+        df_receitas_filtrado = df_receitas_filtrado[df_receitas_filtrado['Mes_Num'].isin(meses_num_selecionados)]
 else:
     df_receitas_filtrado = df_receitas.copy()
     mostrar_receitas = True
@@ -239,12 +247,15 @@ if mostrar_receitas:
             value=categorias_receita
         )
 else:
-    st.info("📌 Dados de receitas ocultados - filtro de Centro de Custo ativo. Receitas não possuem centro de custo.")
+    if centro_excluido:
+        st.info("📌 Indicadores de receitas ocultados - filtro de exclusão de Centro de Custo ativo. O comparativo abaixo mostra receitas completas vs despesas filtradas.")
+    else:
+        st.info("📌 Dados de receitas ocultados - filtro de Centro de Custo ativo. Receitas não possuem centro de custo.")
 
 st.markdown("---")
 
-# Gráfico Comparativo Receitas x Despesas (apenas se não houver filtro de centro de custo)
-if mostrar_receitas:
+# Gráfico Comparativo Receitas x Despesas
+if mostrar_comparativo:
     st.subheader("📊 Comparativo Receitas x Despesas por Mês")
 
     # Preparar dados de despesas por mês
