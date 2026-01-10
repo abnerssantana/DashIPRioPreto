@@ -714,6 +714,149 @@ with col_down2:
         mime="text/csv"
     )
 
+st.markdown("---")
+
+# Tabela de dados detalhada de Receitas
+if mostrar_receitas or mostrar_comparativo:
+    st.subheader("💰 Dados Detalhados de Receitas")
+
+    # Filtros específicos para a tabela de receitas
+    st.markdown("**Filtros da Tabela:**")
+    col_rec1, col_rec2, col_rec3 = st.columns(3)
+
+    with col_rec1:
+        # Filtro de Categoria
+        categorias_receitas = ['Todas'] + sorted(df_receitas_filtrado['Categoria'].dropna().unique().tolist())
+        categoria_tabela = st.selectbox(
+            "Categoria",
+            options=categorias_receitas,
+            index=0,
+            key="categoria_receitas"
+        )
+
+    with col_rec2:
+        # Filtro de Mês
+        meses_receitas = ['Todos'] + sorted(df_receitas_filtrado['Nome_Mes'].dropna().unique().tolist(),
+                                            key=lambda x: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                                                          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].index(x) if x in ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] else 99)
+        mes_receita_tabela = st.selectbox(
+            "Mês",
+            options=meses_receitas,
+            index=0,
+            key="mes_receitas"
+        )
+
+    with col_rec3:
+        # Ordenação
+        ordenar_receitas_por = st.selectbox(
+            "Ordenar por",
+            options=['Mês', 'Valor (Maior)', 'Valor (Menor)', 'Categoria'],
+            index=0,
+            key="ordenar_receitas"
+        )
+
+    # Segunda linha de filtros
+    col_rec4, col_rec5 = st.columns(2)
+
+    with col_rec4:
+        # Opção de busca
+        busca_receitas = st.text_input("🔍 Buscar (Categoria):", "", key="busca_receitas")
+
+    with col_rec5:
+        # Limite de registros
+        limite_receitas = st.selectbox(
+            "Exibir registros",
+            options=['Todos', '50', '100', '200'],
+            index=0,
+            key="limite_receitas"
+        )
+
+    # Preparar dados para exibição
+    df_receitas_exibir = df_receitas_filtrado[['Nome_Mes', 'Categoria', 'Valor']].copy()
+    df_receitas_exibir = df_receitas_exibir.merge(
+        df_receitas_filtrado[['Nome_Mes', 'Mes_Num']].drop_duplicates(),
+        on='Nome_Mes'
+    )
+
+    # Aplicar filtro de categoria
+    if categoria_tabela != 'Todas':
+        df_receitas_exibir = df_receitas_exibir[df_receitas_exibir['Categoria'] == categoria_tabela]
+
+    # Aplicar filtro de mês
+    if mes_receita_tabela != 'Todos':
+        df_receitas_exibir = df_receitas_exibir[df_receitas_exibir['Nome_Mes'] == mes_receita_tabela]
+
+    # Aplicar busca
+    if busca_receitas:
+        mask_receitas = df_receitas_exibir['Categoria'].str.contains(busca_receitas, case=False, na=False)
+        df_receitas_exibir = df_receitas_exibir[mask_receitas]
+
+    # Aplicar ordenação
+    if ordenar_receitas_por == 'Valor (Maior)':
+        df_receitas_exibir = df_receitas_exibir.sort_values('Valor', ascending=False)
+    elif ordenar_receitas_por == 'Valor (Menor)':
+        df_receitas_exibir = df_receitas_exibir.sort_values('Valor', ascending=True)
+    elif ordenar_receitas_por == 'Categoria':
+        df_receitas_exibir = df_receitas_exibir.sort_values(['Categoria', 'Mes_Num'])
+    else:
+        df_receitas_exibir = df_receitas_exibir.sort_values(['Mes_Num', 'Categoria'])
+
+    # Aplicar limite de registros
+    if limite_receitas != 'Todos':
+        df_receitas_exibir = df_receitas_exibir.head(int(limite_receitas))
+
+    # Remover coluna Mes_Num da exibição
+    df_receitas_exibir_final = df_receitas_exibir[['Nome_Mes', 'Categoria', 'Valor']].copy()
+    df_receitas_exibir_final.columns = ['Mês', 'Categoria', 'Valor']
+
+    # Mostrar contagem de registros
+    st.caption(f"Exibindo {len(df_receitas_exibir_final)} de {len(df_receitas_filtrado)} registros")
+
+    # Formatar valores para exibição
+    df_receitas_formatado = df_receitas_exibir_final.copy()
+    df_receitas_formatado['Valor'] = df_receitas_formatado['Valor'].apply(formatar_real)
+
+    st.dataframe(
+        df_receitas_formatado,
+        use_container_width=True,
+        hide_index=True,
+        height=400
+    )
+
+    # Estatísticas rápidas da seleção atual
+    if len(df_receitas_exibir) > 0:
+        col_stat_rec1, col_stat_rec2, col_stat_rec3, col_stat_rec4 = st.columns(4)
+        with col_stat_rec1:
+            st.metric("Total da Seleção", formatar_real(df_receitas_exibir['Valor'].sum()))
+        with col_stat_rec2:
+            st.metric("Média da Seleção", formatar_real(df_receitas_exibir['Valor'].mean()))
+        with col_stat_rec3:
+            st.metric("Maior Valor", formatar_real(df_receitas_exibir['Valor'].max()))
+        with col_stat_rec4:
+            st.metric("Menor Valor", formatar_real(df_receitas_exibir['Valor'].min()))
+
+    # Botões de download de receitas
+    col_down_rec1, col_down_rec2 = st.columns(2)
+    with col_down_rec1:
+        st.download_button(
+            label="📥 Baixar seleção atual (CSV)",
+            data=df_receitas_exibir_final.to_csv(index=False).encode('utf-8'),
+            file_name=f"receitas_selecao_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            key="download_receitas_selecao"
+        )
+    with col_down_rec2:
+        st.download_button(
+            label="📥 Baixar todas filtradas (CSV)",
+            data=df_receitas_filtrado.to_csv(index=False).encode('utf-8'),
+            file_name=f"receitas_filtradas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            key="download_receitas_todas"
+        )
+else:
+    st.subheader("💰 Dados Detalhados de Receitas")
+    st.info("📌 Tabela de receitas não disponível - filtro de inclusão de Centro de Custo ativo.")
+
 # Footer
 st.markdown("---")
 st.markdown(
