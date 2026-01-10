@@ -157,13 +157,16 @@ if meses_selecionados:
 df_filtrado = df_filtrado[(df_filtrado['Valor'] >= valor_min) & (df_filtrado['Valor'] <= valor_max)]
 
 # Filtrar receitas pelos meses selecionados (se houver)
-# Se centro de custo estiver selecionado, não mostrar receitas (receitas não têm centro de custo)
-if centro_selecionado or centro_excluido:
+# Se centro de custo estiver selecionado para inclusão, não mostrar receitas (receitas não têm centro de custo)
+# Se apenas exclusão estiver ativa, manter comparativo (receitas completas vs despesas filtradas)
+if centro_selecionado:
     df_receitas_filtrado = pd.DataFrame(columns=df_receitas.columns)
     mostrar_receitas = False
+    mostrar_comparativo = False
 else:
     df_receitas_filtrado = df_receitas.copy()
     mostrar_receitas = True
+    mostrar_comparativo = True
     if meses_selecionados:
         meses_num_selecionados = [int(m.split('/')[0]) for m in meses_selecionados]
         df_receitas_filtrado = df_receitas_filtrado[df_receitas_filtrado['Mes_Num'].isin(meses_num_selecionados)]
