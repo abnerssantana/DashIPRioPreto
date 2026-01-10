@@ -112,7 +112,14 @@ st.sidebar.header("🔍 Filtros")
 # Filtro de Centro de Custo
 centros_custo = ['Todos'] + sorted(df['Centro de Custo'].dropna().unique().tolist())
 centro_selecionado = st.sidebar.multiselect(
-    "Centro de Custo",
+    "Incluir Centro de Custo",
+    options=centros_custo[1:],
+    default=[]
+)
+
+# Filtro para Excluir Centro de Custo
+centro_excluido = st.sidebar.multiselect(
+    "Excluir Centro de Custo",
     options=centros_custo[1:],
     default=[]
 )
@@ -141,6 +148,9 @@ df_filtrado = df.copy()
 if centro_selecionado:
     df_filtrado = df_filtrado[df_filtrado['Centro de Custo'].isin(centro_selecionado)]
 
+if centro_excluido:
+    df_filtrado = df_filtrado[~df_filtrado['Centro de Custo'].isin(centro_excluido)]
+
 if meses_selecionados:
     df_filtrado = df_filtrado[df_filtrado['Mês Ano Ref.'].isin(meses_selecionados)]
 
@@ -148,7 +158,7 @@ df_filtrado = df_filtrado[(df_filtrado['Valor'] >= valor_min) & (df_filtrado['Va
 
 # Filtrar receitas pelos meses selecionados (se houver)
 # Se centro de custo estiver selecionado, não mostrar receitas (receitas não têm centro de custo)
-if centro_selecionado:
+if centro_selecionado or centro_excluido:
     df_receitas_filtrado = pd.DataFrame(columns=df_receitas.columns)
     mostrar_receitas = False
 else:
