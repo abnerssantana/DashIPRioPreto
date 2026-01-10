@@ -603,7 +603,7 @@ st.plotly_chart(fig_treemap, use_container_width=True)
 st.markdown("---")
 
 # Tabela de dados detalhada
-st.subheader("📑 Dados Detalhados")
+st.subheader("📑 Dados Detalhados de Despesas")
 
 # Filtros específicos para a tabela detalhada
 st.markdown("**Filtros da Tabela:**")
