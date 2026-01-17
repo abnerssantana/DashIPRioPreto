@@ -126,6 +126,16 @@ centro_excluido = st.sidebar.multiselect(
 
 st.sidebar.markdown("---")
 
+# Filtro de Especificação de Despesas
+especificacoes_disponiveis = ['Todas'] + sorted(df['Especificação'].dropna().unique().tolist())
+especificacao_selecionada = st.sidebar.multiselect(
+    "Especificação Despesas",
+    options=especificacoes_disponiveis[1:],
+    default=[]
+)
+
+st.sidebar.markdown("---")
+
 # Filtro de Categoria de Receitas
 categorias_receitas_global = ['Todas'] + sorted(df_receitas['Categoria'].dropna().unique().tolist())
 categoria_receita_selecionada = st.sidebar.multiselect(
@@ -162,6 +172,9 @@ if centro_selecionado:
 
 if centro_excluido:
     df_filtrado = df_filtrado[~df_filtrado['Centro de Custo'].isin(centro_excluido)]
+
+if especificacao_selecionada:
+    df_filtrado = df_filtrado[df_filtrado['Especificação'].isin(especificacao_selecionada)]
 
 if meses_selecionados:
     df_filtrado = df_filtrado[df_filtrado['Mês Ano Ref.'].isin(meses_selecionados)]
